@@ -16,7 +16,7 @@ package alas
 
 import (
 	"errors"
-	"fmt"
+	"net/url"
 )
 
 type RepoType string
@@ -63,14 +63,21 @@ type Location struct {
 // If a mirror url is provided a fully qualified Repo.Location.Href is returned
 // A ErrRepoNotFound error is returned if the RepoType cannot be located.
 func (md *RepoMD) Repo(t RepoType, mirror string) (Repo, error) {
-	var repo Repo
 	for _, repo := range md.RepoList {
 		if repo.Type == string(t) {
 			if mirror != "" {
-				repo.Location.Href = fmt.Sprintf("%s%s", mirror, repo.Location.Href)
+				u, err := url.Parse(mirror)
+				if err != nil {
+					return Repo{}, err
+				}
+				href, err := u.Parse(repo.Location.Href)
+				if err != nil {
+					return Repo{}, err
+				}
+				repo.Location.Href = href.String()
 			}
 			return repo, nil
 		}
 	}
-	return repo, ErrRepoNotFound
+	return Repo{}, ErrRepoNotFound
 }
