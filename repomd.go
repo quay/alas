@@ -1,6 +1,9 @@
 package alas
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type RepoType string
 
@@ -42,10 +45,16 @@ type Location struct {
 	Href string `xml:"href,attr"`
 }
 
-func (md *RepoMD) Repo(t RepoType) (Repo, error) {
+// Repo returns a Repo struct per the specified RepoType.
+// If a mirror url is provided a fully qualified Repo.Location.Href is returned
+// A ErrRepoNotFound error is returned if the RepoType cannot be located.
+func (md *RepoMD) Repo(t RepoType, mirror string) (Repo, error) {
 	var repo Repo
 	for _, repo := range md.RepoList {
 		if repo.Type == string(t) {
+			if mirror != "" {
+				repo.Location.Href = fmt.Sprintf("%s%s", mirror, repo.Location.Href)
+			}
 			return repo, nil
 		}
 	}
